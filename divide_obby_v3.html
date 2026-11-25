@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ДЕЛИЛКА-ОББИ</title>
+<style>
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;min-height:100vh;font-family:'Trebuchet MS',Verdana,system-ui,sans-serif;color:#1d2433;background:linear-gradient(#6fcaff,#b8ebff 55%,#d7f5c2);overflow-x:hidden}
+.app{width:min(820px,94vw);margin:0 auto;padding:18px 0 60px}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font:900 26px 'Arial Black',Arial,sans-serif;color:#fff;text-shadow:0 4px 0 #0d4f8b;letter-spacing:1px}
+.coins{background:#ffd23f;border-bottom:5px solid #c79a00;border-radius:12px;padding:8px 14px;font-weight:900;display:flex;align-items:center;gap:8px}
+.coin{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff6b0,#f5a700);border:2px solid #b07800}
+.track{display:flex;gap:6px;margin:26px 0 14px}
+.tile{flex:1;min-width:0;position:relative;background:#c9d3de;border-bottom:6px solid #98a5b5;border-radius:10px;padding:8px 4px;text-align:center;font-size:12px;font-weight:800;color:#4a5568;line-height:1.25}
+.tile.done{background:#7bd88f;border-color:#3fa45a;color:#0f4d22}
+.tile.now{background:#ffd23f;border-color:#c79a00;color:#333}
+.avatar{position:absolute;left:50%;top:-26px;width:24px;height:24px;margin-left:-12px;background:linear-gradient(#ff6b5b,#d93b2b);border-radius:4px;border-bottom:4px solid #9e2a20;animation:jump .6s ease}
+.avatar:after{content:'';position:absolute;left:5px;top:7px;width:4px;height:4px;background:#fff;box-shadow:9px 0 #fff;border-radius:1px}
+.card{background:#fff;border-radius:20px;border-bottom:8px solid #b9c6d6;box-shadow:0 14px 30px #0d4f8b33;padding:clamp(18px,4vw,28px)}
+.btn{font:900 17px 'Arial Black',Arial,sans-serif;text-transform:uppercase;border:0;border-radius:12px;padding:12px 22px;color:#fff;background:#00b06f;border-bottom:6px solid #00803f;cursor:pointer;transition:transform .1s}
+.btn:hover{filter:brightness(1.07)}
+.btn:active{transform:translateY(3px);border-bottom-width:3px}
+.btn.alt{background:#0d7ce0;border-bottom-color:#075aa3}
+.btn.warn{background:#ffb020;border-bottom-color:#c77c00;color:#2a1d00}
+.buttons{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:18px}
+.lvlhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:800;color:#5c6b82;font-size:14px}
+.bar{height:12px;background:#e4ebf3;border-radius:8px;margin:10px 0 18px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#00b06f,#7bd88f);transition:width .5s}
+.expr{font:900 clamp(34px,6vw,54px) 'Arial Black',Arial,sans-serif;text-align:center;margin:14px 0;display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap}
+.ans{font:900 32px 'Arial Black',Arial,sans-serif;width:150px;text-align:center;border:4px solid #c9d3de;border-radius:14px;padding:6px;color:#1d2433;background:#f7fafc}
+.ans:focus{outline:none;border-color:#0d7ce0;box-shadow:0 0 0 4px #0d7ce033}
+.ans.ok{border-color:#00b06f;background:#e6fff1}
+.ans.no{border-color:#e74c3c;background:#ffecea}
+.story{font-size:20px;line-height:1.5;text-align:center;margin:10px 0 18px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.opt{font:900 26px 'Arial Black',Arial,sans-serif;border:0;border-radius:14px;padding:16px 10px;background:#eef4fb;color:#1d2433;border-bottom:6px solid #b8c7d9;cursor:pointer}
+.opt:hover{background:#dfeeff}
+.opt.sel{background:#0d7ce0;color:#fff;border-bottom-color:#075aa3}
+.opt.good{background:#00b06f;color:#fff;border-bottom-color:#00803f}
+.opt.bad{background:#e74c3c;color:#fff;border-bottom-color:#a53227}
+/* столбик */
+.boardwrap{overflow-x:auto;padding:4px 0}
+.board{display:inline-block;--N:6}
+.brow{display:grid;grid-template-columns:repeat(var(--N),46px);justify-items:center;align-items:center}
+.c{height:46px;width:46px;display:flex;align-items:center;justify-content:center}
+.c.vb{border-left:3px solid #1d2433}
+.c.top{border-top:3px solid #1d2433}
+.dg,.dv{font:900 26px 'Courier New',monospace;color:#1d2433}
+.dv{color:#0d7ce0}
+.bi{width:42px;height:42px;text-align:center;font:900 22px 'Courier New',monospace;border:2px solid #c9d3de;border-radius:8px;background:#f7fafc;color:#1d2433}
+.bi:focus{outline:none;border-color:#0d7ce0;box-shadow:0 0 0 3px #0d7ce044}
+.bi:disabled{opacity:.3;background:#f0f0f0}
+.bi.done{border-color:#00b06f;background:#e6fff1;opacity:1}
+.bi.no{border-color:#e74c3c;background:#ffecea}
+.hintbox{display:none;margin-top:12px;padding:14px;border-radius:14px;background:#fff7d6;border:2px dashed #e0b000;line-height:1.5}
+.hintbox.show{display:block;animation:in .25s ease}
+.fb{min-height:28px;margin-top:12px;text-align:center;font-weight:800;font-size:17px}
+.fb.good{color:#00803f}
+.fb.bad{color:#c0392b}
+.shake{animation:shake .35s}
+.cube{width:96px;height:96px;margin:6px auto 14px;background:linear-gradient(135deg,#ff7a6b,#d93b2b);border-radius:12px;border-bottom:10px solid #9e2a20;box-shadow:0 12px 20px #0003;position:relative;animation:float 2.4s ease-in-out infinite}
+.cube:before,.cube:after{content:'';position:absolute;top:30px;width:14px;height:14px;background:#fff;border-radius:3px;box-shadow:inset -4px -4px 0 #222}
+.cube:before{left:22px}.cube:after{right:22px}
+.center{text-align:center}
+.title{font:900 clamp(30px,6vw,46px) 'Arial Black',Arial,sans-serif;color:#0d4f8b;margin:8px 0;text-shadow:0 3px 0 #fff}
+.rules{display:grid;gap:10px;margin:16px 0;text-align:left;font-size:17px;line-height:1.4}
+.rule{background:#eef4fb;border-radius:12px;padding:12px 14px;border-left:6px solid #0d7ce0}
+.stats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+.stat{background:#eef4fb;border-radius:14px;padding:12px 18px;border-bottom:5px solid #b8c7d9;min-width:120px}
+.stat b{display:block;font:900 28px 'Arial Black',Arial,sans-serif}
+/* мини-игры */
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mpair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mcol{display:grid;gap:10px}
+.mb{font:900 20px 'Arial Black',Arial,sans-serif;padding:14px 8px;border-radius:12px;background:#eef4fb;border:0;border-bottom:5px solid #b8c7d9;color:#1d2433;cursor:pointer}
+.mb.sel{background:#ffd23f;border-bottom-color:#c79a00}
+.mb.done{background:#00b06f;color:#fff;border-bottom-color:#00803f;cursor:default}
+.mb.bad{background:#e74c3c;color:#fff;border-bottom-color:#a53227}
+.mb:disabled{cursor:default}
+.conf{position:fixed;top:-24px;width:12px;height:16px;border-radius:3px;pointer-events:none;animation:fall 2.2s linear forwards;z-index:9}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.2}}
+@keyframes jump{0%{transform:translateY(0)}40%{transform:translateY(-30px)}100%{transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes shakeK{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.shake{animation:shakeK .35s}
+@media(max-width:560px){.tile{font-size:10px}.opt{font-size:20px}.mgrid{grid-template-columns:repeat(3,1fr)}.bi{width:36px;height:36px}.c{width:38px;height:40px}.brow{grid-template-columns:repeat(var(--N),38px)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hud">
+    <div class="logo">ДЕЛИЛКА-ОББИ</div>
+    <div class="coins"><span class="coin"></span><span id="coins">0</span></div>
+  </div>
+  <div id="track" class="track" hidden></div>
+  <main id="screen" class="card"></main>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const shuffle=a=>a.sort(()=>Math.random()-.5);
+
+const LEVELS=[
+  {name:'Старт',sub:'разминка',kind:'simple',n:4,reward:10},
+  {name:'Лава',sub:'быстрый счёт',kind:'hard',n:3,reward:20},
+  {name:'Тропа',sub:'истории про деление',kind:'story',n:3,reward:25},
+  {name:'Башня',sub:'столбик без остатка',kind:'board',n:2,reward:40},
+  {name:'Мост',sub:'столбик с остатком',kind:'board',rem:true,n:2,reward:50},
+  {name:'Босс',sub:'всё вместе',kind:'mix',n:4,reward:40}
+];
+
+const STORY=[
+  {t:'В классе 28 учеников. Их делят на команды по 4 человека. Сколько получится команд?',a:7,h:'Сколько раз по 4 помещается в 28? Проверь: команды × 4 должно быть 28.'},
+  {t:'36 фишек раздали 9 игрокам поровну. Сколько фишек получил каждый?',a:4,h:'Раздели общее количество на число игроков.'},
+  {t:'У Денчика 90 робуксов, у Ани 15. Во сколько раз у Денчика больше робуксов?',a:6,h:'«Во сколько раз» — это деление большего числа на меньшее.'},
+  {t:'240 единиц опыта разделили поровну между 8 уровнями персонажа. Сколько опыта досталось каждому уровню?',a:30,h:'Раздели опыт на количество уровней.'},
+  {t:'6 одинаковых скинов стоят вместе 3600 робуксов. Сколько стоит один скин?',a:600,h:'Общую стоимость раздели на количество одинаковых скинов.'},
+  {t:'Отряд из 5 игроков собрал 175 блоков и разделил поровну. Сколько блоков у каждого?',a:35,h:'Разбей 175 на части: 100 и 75. Сколько раз 5 помещается в каждой части?'},
+  {t:'Из 96 блоков строят полосы по 8 блоков. Сколько полос получится?',a:12,h:'Сколько раз 8 помещается в 96?'},
+  {t:'Торт разрезали на 12 кусочков поровну между 3 друзьями. Сколько кусочков у каждого?',a:4,h:'Раздели количество кусочков на число друзей.'}
+];
+
+const MINI=['mine','sort','memory'];
+let G;
+const TEST=/test/.test(location.search);
+const recent=[];
+// не даём повторяться одному и тому же заданию подряд (храним последние 6)
+function unique(make){
+  let t;
+  for(let i=0;i<50;i++){
+    t=make();
+    const key=JSON.stringify([t.kind,t.a,t.b,t.text]);
+    if(!recent.includes(key)){recent.push(key);if(recent.length>6)recent.shift();return t;}
+  }
+  return t;
+}
+function answerText(t){
+  if(t.kind==='board')return `Частное: ${t.q}, остаток: ${t.r}`;
+  return `Ответ: ${t.ans}`;
+}
+
+/* ---------- генерация ---------- */
+// Шаги столбика: для каждого шага — число, которое делим, частное, произведение, остаток и позиция в делимом
+function boardSteps(a,b){
+  const d=String(a).split('').map(Number);
+  let i=0,cur=0;
+  while(cur<b){cur=cur*10+d[i];i++;}
+  const steps=[];let e=i-1;
+  for(;;){
+    const q=Math.floor(cur/b),p=q*b,r=cur-p;
+    steps.push({cur,q,p,r,e,L:String(cur).length});
+    if(i>=d.length)break;
+    cur=r*10+d[i];e=i;i++;
+  }
+  return steps;
+}
+
+function storyOpts(a){
+  const pool=[a+1,a+2,a+3,a-1,a-2,a*2,a*3,Math.round(a/2)].filter(x=>x>0&&x!==a);
+  const set=new Set();
+  shuffle(pool).forEach(x=>{if(set.size<3)set.add(x);});
+  return shuffle([a,...set]);
+}
+
+function makeTask(kind,lv){
+  if(kind==='simple'){
+    const b=rnd(2,9),q=rnd(2,9);
+    return {kind,a:b*q,b,ans:q,reward:lv.reward,hint:`Вспомни таблицу умножения на ${b}: на какое число нужно умножить ${b}, чтобы получить ${b*q}?`};
+  }
+  if(kind==='hard'){
+    const b=rnd(11,30),q=rnd(11,30);
+    return {kind,a:b*q,b,ans:q,reward:lv.reward,hint:'Разбей делимое на круглые части: например, сначала раздели на 10, а потом подбери остаток.'};
+  }
+  if(kind==='story'){
+    const s=STORY[rnd(0,STORY.length-1)];
+    return {kind,text:s.t,ans:s.a,opts:storyOpts(s.a),reward:lv.reward,hint:s.h};
+  }
+  if(kind==='board'){
+    let b,q,a;
+    if(lv.rem){b=rnd(12,49);q=rnd(20,99);a=b*q+rnd(1,b-1);}
+    else{b=rnd(11,39);q=rnd(12,99);a=b*q;}
+    return {kind,a,b,q:Math.floor(a/b),r:a%b,steps:boardSteps(a,b),step:0,reward:lv.reward};
+  }
+}
+
+function buildLevel(lv){
+  const kinds=lv.kind==='mix'?['simple','hard','story','board']:[lv.kind];
+  const tasks=[];
+  for(let i=0;i<lv.n;i++){
+    const k=kinds[i%kinds.length];
+    const lvx=(k==='board'&&lv.kind==='mix')?{...lv,rem:false}:lv;
+    tasks.push(unique(()=>makeTask(k,lvx)));
+  }
+  return tasks;
+}
+
+/* ---------- экраны и HUD ---------- */
+function setCoins(){$('coins').textContent=G.coins;}
+
+function renderTrack(){
+  const tr=$('track');
+  tr.hidden=false;
+  tr.innerHTML=LEVELS.map((lv,i)=>{
+    const cls=i<G.lv?'done':i===G.lv?'now':'';
+    return `<div class="tile ${cls}">${lv.name}${i===G.lv?'<div class="avatar"></div>':''}</div>`;
+  }).join('');
+}
+
+function startScreen(){
+  $('track').hidden=true;
+  $('screen').innerHTML=`
+    <div class="center">
+      <div class="cube"></div>
+      <div class="title">ДЕЛИЛКА-ОББИ</div>
+      <p style="font-size:18px;color:#5c6b82">Пройди полосу препятствий. Между уровнями ждут мини-игры!</p>
+    </div>
+    <div class="rules">
+      <div class="rule"><b>Лёгкие и сложные примеры.</b> Считаешь в уме и печатаешь ответ.</div>
+      <div class="rule"><b>Столбик.</b> Пишешь частное, произведение и остаток по клеткам, как в тетради.</div>
+      <div class="rule"><b>Истории.</b> Понимаешь, зачем нужно деление в жизни.</div>
+      <div class="rule"><b>Ошибка — не конец.</b> Попробуй ещё раз. Подсказка открывается по кнопке.</div>
+    </div>
+    <div class="buttons"><button class="btn" id="play">Играть</button></div>`;
+  $('play').onclick=startGame;
+}
+
+function startGame(){
+  G={lv:0,t:0,coins:0,ok:0,bad:0,tasks:LEVELS.map(buildLevel)};
+  setCoins();renderTrack();showTask();
+}
+
+function showTask(){
+  const lv=LEVELS[G.lv],tasks=G.tasks[G.lv],t=tasks[G.t];
+  $('screen').innerHTML=`
+    <div class="lvlhead"><span>${lv.name}: ${lv.sub}</span><span>Задание ${G.t+1} из ${tasks.length}</span></div>
+    <div class="bar"><i style="width:${G.t/tasks.length*100}%"></i></div>
+    <div id="tbody"></div>
+    <div id="fb" class="fb"></div>
+    <div class="buttons"><button class="btn" id="chk">Проверить</button><button class="btn warn" id="hnt">Подсказка</button>${TEST?'<button class="btn ghost" id="ans">Ответ (тест)</button>':''}</div>
+    <div id="hint" class="hintbox"></div>`;
+  renderBody(t);
+  setHint(t);
+  $('chk').onclick=()=>check(t);
+  $('hnt').onclick=()=>$('hint').classList.add('show');
+  if(TEST)$('ans').onclick=()=>{$('hint').textContent=answerText(t);$('hint').classList.add('show');};
+  const first=document.querySelector('#tbody input:not(:disabled)');
+  if(first)first.focus();
+}
+
+function setHint(t){
+  if(t.kind==='board'){
+    $('hint').textContent=`Шаг ${t.step+1}: подбери цифру частного так, чтобы делитель, умноженный на неё, не превышал число, с которым работаем. Запиши произведение под ним, вычти и запиши остаток. Остаток всегда меньше делителя. Потом сноси следующую цифру.`;
+  }else $('hint').textContent=t.hint;
+}
+
+function renderBody(t){
+  const box=$('tbody');
+  if(t.kind==='simple'||t.kind==='hard'){
+    box.innerHTML=`<div class="expr">${t.a} : ${t.b} = <input id="in" class="ans" inputmode="numeric" autocomplete="off"></div>`;
+  }
+  if(t.kind==='story'){
+    box.innerHTML=`<p class="story">${t.text}</p><div class="opts">${t.opts.map(o=>`<button class="opt" data-v="${o}">${o}</button>`).join('')}</div>`;
+    box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{box.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+  }
+  if(t.kind==='board'){
+    box.innerHTML=`<div class="expr" style="font-size:24px;margin:4px 0 10px">${t.a} : ${t.b}</div><div class="boardwrap">${boardHTML(t)}</div>`;
+    document.querySelectorAll('.bi').forEach(i=>{if(+i.dataset.s>t.step)i.disabled=true;});
+  }
+}
+
+/* ---------- столбик по клеткам ---------- */
+function boardHTML(t){
+  const a=String(t.a),b=String(t.b),n=a.length,lq=t.steps.length,W=n+1+Math.max(b.length,lq);
+  const mk=()=>Array.from({length:W},(_,j)=>({h:'',vb:j===n,top:false}));
+  const row=(cells)=>`<div class="brow">${cells.map(c=>`<div class="c${c.vb?' vb':''}${c.top?' top':''}">${c.h}</div>`).join('')}</div>`;
+  const inp=(k,role,exp)=>`<input class="bi" data-s="${k}" data-x="${role}" data-exp="${exp}" maxlength="1" inputmode="numeric" autocomplete="off">`;
+  const fill=(arr,e,L,str,k,role)=>{
+    const ps=str.padStart(L,' ');
+    for(let j=0;j<L;j++){arr[e-L+1+j].h=inp(k,role,ps[j]===' '?'':ps[j]);}
+  };
+  const rows=[];
+  // 1) делимое слева, делитель справа от черты
+  const d=mk();
+  a.split('').forEach((c,j)=>d[j].h=`<span class="dg">${c}</span>`);
+  b.split('').forEach((c,j)=>d[n+1+j].h=`<span class="dv">${c}</span>`);
+  rows.push(row(d));
+  // 2) черта под делителем и частное под ней
+  const qr=mk();
+  for(let j=n+1;j<W;j++)qr[j].top=true;
+  t.steps.forEach((s,k)=>{qr[n+1+k].h=inp(k,'q',s.q);});
+  rows.push(row(qr));
+  // 3) под делимым — произведения и остатки по шагам
+  t.steps.forEach((s,k)=>{
+    const pr=mk(),rm=mk();
+    fill(pr,s.e,s.L,String(s.p),k,'p');
+    fill(rm,s.e,s.L,String(s.r),k,'r');
+    rm.forEach(c=>{if(c.h)c.top=true;});
+    rows.push(row(pr),row(rm));
+  });
+  return `<div class="board" style="--N:${W}">${rows.join('')}</div>`;
+}
+
+/* ---------- проверка ---------- */
+function fb(msg,ok){const f=$('fb');f.textContent=msg;f.className='fb '+(ok?'good':'bad');}
+function shake(el){if(!el)return;el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}
+
+function check(t){
+  if(t.kind==='simple'||t.kind==='hard'){
+    const inp=$('in');
+    if(!inp.value.trim()){fb('Введи число в поле ответа.',false);return;}
+    const ok=+inp.value===t.ans;
+    inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);
+    if(ok)return success(t,'');
+    G.bad++;fb('Не совпало. Попробуй ещё раз!',false);shake($('tbody'));
+    return;
+  }
+  if(t.kind==='story'){
+    const sel=document.querySelector('.opt.sel');
+    if(!sel){fb('Выбери вариант ответа.',false);return;}
+    const ok=+sel.dataset.v===t.ans;
+    document.querySelectorAll('.opt').forEach(o=>{if(+o.dataset.v===t.ans)o.classList.add('good');});
+    if(ok)return success(t,'');
+    sel.classList.remove('sel');sel.classList.add('bad');
+    G.bad++;fb('Не тот вариант. Подумай ещё!',false);shake($('tbody'));
+    return;
+  }
+  if(t.kind==='board')return checkBoard(t);
+}
+
+function checkBoard(t){
+  const ins=[...document.querySelectorAll(`.bi[data-s="${t.step}"]`)];
+  let ok=true;
+  ins.forEach(i=>{
+    const r=i.value===i.dataset.exp;
+    i.classList.toggle('no',!r);
+    ok=ok&&r;
+  });
+  if(!ok){
+    G.bad++;
+    const which=ins.some(i=>i.dataset.x==='q'&&i.value!==i.dataset.exp)?'Проверь частное: сколько раз делитель помещается в числе?':'Проверь произведение и остаток. Остаток должен быть меньше делителя.';
+    fb(which,false);shake($('tbody'));
+    return;
+  }
+  ins.forEach(i=>{i.disabled=true;i.classList.add('done');});
+  t.step++;
+  if(t.step>=t.steps.length){
+    return success(t,`Частное ${t.q}, остаток ${t.r}`);
+  }
+  document.querySelectorAll(`.bi[data-s="${t.step}"]`).forEach(i=>i.disabled=false);
+  const first=document.querySelector(`.bi[data-s="${t.step}"][data-x="q"]`);
+  if(first)first.focus();
+  fb('Верно! Сноси следующую цифру и продолжай.',true);
+  setHint(t);
+}
+
+function success(t,extra){
+  G.ok++;G.coins+=t.reward;setCoins();
+  fb(`Верно!${extra?' '+extra+'.':''} +${t.reward} коинов`,true);
+  setTimeout(()=>{
+    G.t++;
+    if(G.t>=G.tasks[G.lv].length)return levelClear();
+    showTask();
+  },1100);
+}
+
+/* ---------- конец уровня и мини-игры ---------- */
+function confetti(){
+  const cols=['#ffd23f','#00b06f','#0d7ce0','#e74c3c','#ff8fd1'];
+  for(let i=0;i<50;i++){
+    const d=document.createElement('i');
+    d.className='conf';
+    d.style.left=Math.random()*100+'vw';
+    d.style.background=cols[i%cols.length];
+    d.style.animationDelay=Math.random()*.5+'s';
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),3000);
+  }
+}
+
+function levelClear(){
+  const lv=LEVELS[G.lv];
+  G.lv++;
+  renderTrack();
+  confetti();
+  const last=G.lv>=LEVELS.length;
+  $('screen').innerHTML=`
+    <div class="center">
+      <div class="cube"></div>
+      <div class="title">${last?'Финиш!':'Уровень пройден!'}</div>
+      <p style="font-size:18px">«${lv.name}» пройден. Коинов: <b>${G.coins}</b></p>
+      <div class="buttons"><button class="btn" id="nxt">${last?'Итоги':'Мини-игра →'}</button></div>
+    </div>`;
+  $('nxt').onclick=()=>{
+    if(last)return endGame();
+    mini(G.lv-1);
+  };
+}
+
+function nextLevel(){
+  G.t=0;
+  showTask();
+}
+
+function miniWrap(title,body){
+  $('screen').innerHTML=`
+    <div class="lvlhead"><span>Мини-игра</span><span>${title}</span></div>
+    <div id="mbody" style="margin-top:14px">${body}</div>
+    <div id="mfb" class="fb"></div>
+    <div class="buttons"><button class="btn" id="mnext" hidden>Дальше →</button></div>`;
+  $('mnext').onclick=nextLevel;
+}
+
+function fbm(msg,ok){const f=$('mfb');f.textContent=msg;f.className='fb '+(ok?'good':'bad');}
+
+function miniWin(reward){
+  G.coins+=reward;setCoins();
+  fbm(`Победа! +${reward} коинов`,true);
+  $('mnext').hidden=false;
+  confetti();
+}
+
+let lastMini=null;
+function mini(idx){
+  const options=MINI.filter(m=>m!==lastMini);
+  const type=options[rnd(0,options.length-1)];
+  lastMini=type;
+  if(type==='mine')mineGame();
+  if(type==='sort')sortGame();
+  if(type==='memory')memGame();
+}
+
+// Шахта: отметь блоки, где результат равен заданному числу
+function mineGame(){
+  const tgt=rnd(3,9),good=rnd(3,4),items=[];
+  for(let i=0;i<12;i++){
+    const q=i<good?tgt:tgt+rnd(1,4),b=rnd(2,9);
+    items.push({q,b,a:b*q});
+  }
+  shuffle(items);
+  miniWrap(`Шахта: отметь блоки, где результат равен ${tgt}`,
+    `<div class="mgrid">${items.map((it,i)=>`<button class="mb" data-i="${i}">${it.a} : ${it.b}</button>`).join('')}</div>
+     <div class="buttons"><button class="btn alt" id="mchk">Проверить</button></div>`);
+  document.querySelectorAll('.mb').forEach(b=>b.onclick=()=>b.classList.toggle('sel'));
+  $('mchk').onclick=()=>{
+    const sel=[...document.querySelectorAll('.mb.sel')].map(b=>+b.dataset.i);
+    const ok=items.every((it,i)=>(it.q===tgt)===sel.includes(i));
+    if(ok){document.querySelectorAll('.mb').forEach(b=>{if(items[+b.dataset.i].q===tgt)b.classList.add('done');});$('mchk').hidden=true;miniWin(30);return;}
+    fbm('Не все блоки. Проверь, в каких блоках результат точно такой.',false);
+    shake($('mbody'));
+  };
+}
+
+// Сортировка: нажимай блоки от меньшего результата к большему
+function sortGame(){
+  const qs=shuffle([2,3,4,5,6,7,8,9,10,12,15,20]).slice(0,4);
+  const items=qs.map(q=>{const b=rnd(2,9);return {q,b,a:b*q};});
+  const order=items.slice().sort((x,y)=>x.q-y.q);
+  shuffle(items);
+  miniWrap('Сортировка: нажимай от меньшего результата к большему',
+    `<div class="mgrid" style="grid-template-columns:repeat(2,1fr)">${items.map((it,i)=>`<button class="mb" data-i="${i}">${it.a} : ${it.b}</button>`).join('')}</div>`);
+  let k=0;
+  document.querySelectorAll('.mb').forEach(btn=>btn.onclick=()=>{
+    const it=items[+btn.dataset.i];
+    if(it===order[k]){
+      btn.classList.add('done');btn.disabled=true;k++;
+      if(k===order.length){fbm('Идеально!',true);miniWin(30);}
+      else fbm('Верно! Дальше.',true);
+    }else{
+      fbm('Не то! Начни с самого маленького результата.',false);
+      shake($('mbody'));k=0;
+      document.querySelectorAll('.mb').forEach(b=>{b.classList.remove('done','bad');b.disabled=false;});
+    }
+  });
+}
+
+// Пары: соедини пример с результатом
+function memGame(){
+  const pairs=[];
+  for(let i=0;i<4;i++){const b=rnd(2,9),q=rnd(2,9);pairs.push({id:i,a:b*q,b,q});}
+  const left=shuffle(pairs.slice()),right=shuffle(pairs.slice());
+  miniWrap('Пары: соедини пример с результатом',
+    `<div class="mpair"><div class="mcol">${left.map(p=>`<button class="mb" data-id="${p.id}" data-side="l">${p.a} : ${p.b}</button>`).join('')}</div>
+     <div class="mcol">${right.map(p=>`<button class="mb" data-id="${p.id}" data-side="r">${p.q}</button>`).join('')}</div></div>`);
+  let selL=null,found=0;
+  document.querySelectorAll('.mb').forEach(btn=>btn.onclick=()=>{
+    if(btn.disabled)return;
+    if(btn.dataset.side==='l'){
+      document.querySelectorAll('.mb[data-side="l"]').forEach(x=>x.classList.remove('sel'));
+      btn.classList.add('sel');selL=btn.dataset.id;return;
+    }
+    if(selL===null){fbm('Сначала выбери пример слева.',false);return;}
+    const leftBtn=document.querySelector(`.mb[data-side="l"][data-id="${selL}"]`);
+    if(btn.dataset.id===selL){
+      [leftBtn,btn].forEach(x=>{x.classList.remove('sel');x.classList.add('done');x.disabled=true;});
+      found++;selL=null;
+      if(found===pairs.length)miniWin(30);
+      else fbm('Пара найдена!',true);
+    }else{
+      btn.classList.add('bad');leftBtn.classList.add('bad');
+      setTimeout(()=>{btn.classList.remove('bad');leftBtn.classList.remove('bad','sel');},500);
+      selL=null;fbm('Не пара. Попробуй ещё!',false);
+    }
+  });
+}
+
+function endGame(){
+  const total=G.ok+G.bad;
+  const acc=total?Math.round(G.ok/total*100):0;
+  $('track').hidden=false;
+  $('track').innerHTML=LEVELS.map(lv=>`<div class="tile done">${lv.name}</div>`).join('');
+  $('screen').innerHTML=`
+    <div class="center">
+      <div class="cube"></div>
+      <div class="title">Ты прошёл ДЕЛИЛКА-ОББИ!</div>
+      <div class="stats">
+        <div class="stat"><b>${G.coins}</b>коинов</div>
+        <div class="stat"><b>${G.ok}</b>верных</div>
+        <div class="stat"><b>${acc}%</b>точность</div>
+      </div>
+      <p style="font-size:18px;color:#5c6b82">Ошибки тоже помогают учиться. Попробуй пройти ещё раз и заработать больше коинов!</p>
+      <div class="buttons"><button class="btn" id="again">Заново</button></div>
+    </div>`;
+  $('again').onclick=startGame;
+  confetti();
+}
+
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(!t.classList.contains('bi'))return;
+  t.value=t.value.replace(/\D/g,'').slice(-1);
+  if(t.value){
+    const all=[...document.querySelectorAll('.bi:not(:disabled)')];
+    all[all.indexOf(t)+1]?.focus();
+  }
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Backspace'&&e.target.classList.contains('bi')&&!e.target.value){
+    const all=[...document.querySelectorAll('.bi:not(:disabled)')];
+    all[all.indexOf(e.target)-1]?.focus();
+  }
+  if(e.key==='Enter'&&$('chk'))$('chk').click();
+});
+
+startScreen();
+</script>
+</body>
+</html>
